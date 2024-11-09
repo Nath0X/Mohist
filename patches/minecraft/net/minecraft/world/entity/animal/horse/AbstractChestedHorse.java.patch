@@ -1,0 +1,22 @@
+--- a/net/minecraft/world/entity/animal/horse/AbstractChestedHorse.java
++++ b/net/minecraft/world/entity/animal/horse/AbstractChestedHorse.java
+@@ -64,10 +_,18 @@
+             this.m_19998_(Blocks.f_50087_);
+          }
+ 
++//         this.setChest(false);
++      }
++
++   }
++
++   // Paper start
++   protected void postDeathDropItems(org.bukkit.event.entity.EntityDeathEvent event) {
++      if (this.m_30502_() && (event == null || !event.isCancelled())) {
+          this.m_30504_(false);
+       }
+-
+    }
++   // Paper end
+ 
+    public void m_7380_(CompoundTag p_30496_) {
+       super.m_7380_(p_30496_);

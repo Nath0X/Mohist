@@ -1,8 +1,9 @@
 --- a/net/minecraft/world/entity/LivingEntity.java
 +++ b/net/minecraft/world/entity/LivingEntity.java
-@@ -1,21 +_,31 @@
+@@ -1,21 +_,24 @@
  package net.minecraft.world.entity;
  
++import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
 +import com.google.common.base.Function;
  import com.google.common.base.Objects;
  import com.google.common.collect.ImmutableList;
@@ -15,16 +16,15 @@
  import com.mojang.logging.LogUtils;
  import com.mojang.serialization.DataResult;
  import com.mojang.serialization.Dynamic;
+-import java.util.Collection;
+-import java.util.ConcurrentModificationException;
+-import java.util.Iterator;
+-import java.util.List;
+-import java.util.Map;
+-import java.util.Optional;
+-import java.util.UUID;
 +
- import java.util.Collection;
- import java.util.ConcurrentModificationException;
-+import java.util.HashSet;
- import java.util.Iterator;
- import java.util.List;
- import java.util.Map;
- import java.util.Optional;
-+import java.util.Set;
- import java.util.UUID;
++import java.util.*;
 +import java.util.concurrent.ConcurrentHashMap;
 +import java.util.concurrent.atomic.AtomicBoolean;
 +import java.util.concurrent.atomic.AtomicInteger;
@@ -49,7 +49,7 @@
  import net.minecraft.world.entity.boss.wither.WitherBoss;
  import net.minecraft.world.entity.item.ItemEntity;
  import net.minecraft.world.entity.player.Player;
-@@ -114,17 +_,36 @@
+@@ -114,17 +_,32 @@
  import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
  import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
  import net.minecraft.world.phys.AABB;
@@ -61,15 +61,11 @@
 +import org.bukkit.Location;
 +import org.bukkit.craftbukkit.v1_20_R1.attribute.CraftAttributeMap;
 +import org.bukkit.craftbukkit.v1_20_R1.entity.CraftLivingEntity;
++import org.bukkit.craftbukkit.v1_20_R1.entity.CraftPlayer;
 +import org.bukkit.craftbukkit.v1_20_R1.event.CraftEventFactory;
 +import org.bukkit.craftbukkit.v1_20_R1.inventory.CraftItemStack;
-+import org.bukkit.event.entity.ArrowBodyCountChangeEvent;
-+import org.bukkit.event.entity.EntityDamageEvent;
-+import org.bukkit.event.entity.EntityPotionEffectEvent;
-+import org.bukkit.event.entity.EntityRegainHealthEvent;
++import org.bukkit.event.entity.*;
 +import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
-+import org.bukkit.event.entity.EntityResurrectEvent;
-+import org.bukkit.event.entity.EntityTeleportEvent;
 +import org.bukkit.event.player.PlayerItemConsumeEvent;
 +import org.bukkit.event.player.PlayerTeleportEvent;
  import org.slf4j.Logger;
@@ -96,6 +92,15 @@
     private final NonNullList<ItemStack> f_20946_ = NonNullList.m_122780_(2, ItemStack.f_41583_);
     private final NonNullList<ItemStack> f_20947_ = NonNullList.m_122780_(4, ItemStack.f_41583_);
     public boolean f_20911_;
+@@ -192,7 +_,7 @@
+    protected float f_20896_;
+    protected int f_20897_;
+    public float f_20898_;
+-   protected boolean f_20899_;
++   public boolean f_20899_;
+    public float f_20900_;
+    public float f_20901_;
+    public float f_20902_;
 @@ -207,7 +_,7 @@
     public boolean f_20948_ = true;
     @Nullable
@@ -105,12 +110,13 @@
     private LivingEntity f_20951_;
     private int f_20952_;
     private float f_20953_;
-@@ -226,6 +_,27 @@
+@@ -226,6 +_,28 @@
     private float f_20932_;
     protected Brain<?> f_20939_;
     private boolean f_217034_;
 +   // CraftBukkit start
 +   public boolean forceDrops;
++   public List<org.bukkit.inventory.ItemStack> drops = new ArrayList<>();
 +   public CraftAttributeMap craftAttributes;
 +   public boolean collides = true;
 +   public Set<UUID> collidableExemptions = new HashSet<>();
@@ -747,7 +753,7 @@
        }
     }
  
-@@ -1278,6 +_,7 @@
+@@ -1278,54 +_,87 @@
     }
  
     public void m_6667_(DamageSource p_21014_) {
@@ -755,7 +761,17 @@
        if (!this.m_213877_() && !this.f_20890_) {
           Entity entity = p_21014_.m_7639_();
           LivingEntity livingentity = this.m_21232_();
-@@ -1290,7 +_,7 @@
+-         if (this.f_20897_ >= 0 && livingentity != null) {
+-            livingentity.m_5993_(this, this.f_20897_, p_21014_);
++         /* // Paper - move down to make death event cancellable - this is the awardKillScore below
++         if (this.deathScore >= 0 && livingentity != null) {
++            livingentity.awardKillScore(this, this.deathScore, p_21014_);
+          }
++         */ // Paper - move down to make death event cancellable - this is the awardKillScore below
++
+ 
+          if (this.m_5803_()) {
+             this.m_5796_();
           }
  
           if (!this.m_9236_().f_46443_ && this.m_8077_()) {
@@ -764,11 +780,57 @@
           }
  
           this.f_20890_ = true;
-@@ -1315,17 +_,26 @@
+-         this.m_21231_().m_19296_();
++
++//         this.getCombatTracker().recheckStatus();
++         // Paper - moved into if below
+          Level level = this.m_9236_();
+          if (level instanceof ServerLevel) {
+             ServerLevel serverlevel = (ServerLevel)level;
+-            if (entity == null || entity.m_214076_(serverlevel, this)) {
++            org.bukkit.event.entity.EntityDeathEvent deathEvent = this.dropAllDeathLoot(p_21014_);
++            if (deathEvent == null || !deathEvent.isCancelled()) {
++//               if (this.deathScore >= 0 && livingentity != null) {
++//                  livingentity.awardKillScore(this, this.deathScore, p_21014_);
++//               }
++               // Paper start - clear equipment if event is not cancelled
++               if (this instanceof Mob) {
++                  for (EquipmentSlot slot : this.clearedEquipmentSlots) {
++                     this.m_8061_(slot, ItemStack.f_41583_);
++                  }
++                  this.clearedEquipmentSlots.clear();
++               }
++//            if (entity == null || entity.killedEntity(serverlevel, this)) {
+                this.m_146850_(GameEvent.f_223707_);
+-               this.m_6668_(p_21014_);
+-               this.m_21268_(livingentity);
++//               this.dropAllDeathLoot(p_21014_);
++//               this.createWitherRose(livingentity);
+             }
+ 
+-            this.m_9236_().m_7605_(this, (byte)3);
+-         }
+-
+-         this.m_20124_(Pose.DYING);
++//            this.level().broadcastEntityEvent(this, (byte)3);
++            // Paper end
++            this.m_21268_(livingentity);
++         }
++         // Paper start
++         if (this.f_20890_) { // Paper
++            this.m_9236_().m_7605_(this, (byte) 3);
++            this.m_20124_(Pose.DYING);
++         }
++         // Paper end
+       }
+    }
+ 
+    protected void m_21268_(@Nullable LivingEntity p_21269_) {
        if (!this.m_9236_().f_46443_) {
           boolean flag = false;
-          if (p_21269_ instanceof WitherBoss) {
+-         if (p_21269_ instanceof WitherBoss) {
 -            if (this.m_9236_().m_46469_().m_46207_(GameRules.f_46132_)) {
++         if (this.f_20890_ && p_21269_ instanceof WitherBoss) {
 +            if (net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.f_19853_, p_21269_)) {
                 BlockPos blockpos = this.m_20183_();
                 BlockState blockstate = Blocks.f_50070_.m_49966_();
@@ -795,9 +857,14 @@
                 this.m_9236_().m_7967_(itementity);
              }
           }
-@@ -1335,12 +_,9 @@
+@@ -1333,31 +_,52 @@
+       }
+    }
  
-    protected void m_6668_(DamageSource p_21192_) {
+-   protected void m_6668_(DamageSource p_21192_) {
++   protected boolean clearEquipmentSlots = true;
++   protected Set<EquipmentSlot> clearedEquipmentSlots = new java.util.HashSet<>();
++   protected org.bukkit.event.entity.EntityDeathEvent dropAllDeathLoot(DamageSource p_21192_) {
        Entity entity = p_21192_.m_7639_();
 -      int i;
 -      if (entity instanceof Player) {
@@ -811,18 +878,40 @@
  
        boolean flag = this.f_20889_ > 0;
        if (this.m_6125_() && this.m_9236_().m_46469_().m_46207_(GameRules.f_46135_)) {
-@@ -1350,6 +_,10 @@
- 
-       this.m_5907_();
-       this.m_21226_();
+          this.m_7625_(p_21192_, flag);
++         // Paper start
++         final boolean prev = this.clearEquipmentSlots;
++         this.clearEquipmentSlots = false;
++         this.clearedEquipmentSlots.clear();
++         // Paper end
+          this.m_7472_(p_21192_, i, flag);
+-      }
+-
+-      this.m_5907_();
++         this.clearEquipmentSlots = prev; // Paper
++      }
++
++//      this.dropEquipment();
 +
 +      Collection<ItemEntity> drops = captureDrops(null);
-+      if (!net.minecraftforge.common.ForgeHooks.onLivingDrops(this, p_21192_, drops, i, f_20889_ > 0))
-+         drops.forEach(e -> m_9236_().m_7967_(e));
++      EntityDeathEvent deathEvent = CraftEventFactory.callEntityDeathEvent(this, this.drops, () -> {
++         final LivingEntity entityliving = this.m_21232_();
++         if (this.f_20897_ >= 0 && entityliving != null) {
++            entityliving.m_5993_(this, this.f_20897_, p_21192_);
++         }
++      });
++      if (!net.minecraftforge.common.ForgeHooks.onLivingDrops(this, p_21192_, drops, i, f_20889_ > 0)) {
++//         drops.forEach(e -> level().addFreshEntity(e));
++      }
++      this.drops = new ArrayList<>();
++      postDeathDropItems(deathEvent);
+       this.m_21226_();
++      return deathEvent; // Paper
     }
  
     protected void m_5907_() {
-@@ -1357,7 +_,8 @@
+    }
++   protected void postDeathDropItems(org.bukkit.event.entity.EntityDeathEvent event) {}
  
     protected void m_21226_() {
        if (this.m_9236_() instanceof ServerLevel && !this.m_217046_() && (this.m_6124_() || this.f_20889_ > 0 && this.m_6149_() && this.m_9236_().m_46469_().m_46207_(GameRules.f_46135_))) {
@@ -844,6 +933,15 @@
        p_147241_ *= 1.0D - this.m_21133_(Attributes.f_22278_);
        if (!(p_147241_ <= 0.0D)) {
           this.f_19812_ = true;
+@@ -1404,7 +_,7 @@
+    }
+ 
+    @Nullable
+-   protected SoundEvent m_5592_() {
++   public SoundEvent m_5592_() {
+       return SoundEvents.f_11910_;
+    }
+ 
 @@ -1445,6 +_,36 @@
        return p_21202_.m_41616_();
     }
@@ -1313,6 +1411,15 @@
     public abstract void m_8061_(EquipmentSlot p_21036_, ItemStack p_21037_);
  
     protected void m_181122_(ItemStack p_181123_) {
+@@ -1901,7 +_,7 @@
+ 
+    }
+ 
+-   protected float m_6121_() {
++   public float m_6121_() {
+       return 1.0F;
+    }
+ 
 @@ -1955,14 +_,17 @@
        }
  
@@ -1411,11 +1518,16 @@
        Map<EquipmentSlot, ItemStack> map = this.m_21319_();
        if (map != null) {
           this.m_21091_(map);
-@@ -2358,6 +_,7 @@
+@@ -2358,6 +_,12 @@
  
           ItemStack itemstack1 = this.m_6844_(equipmentslot);
           if (this.m_246525_(itemstack, itemstack1)) {
 +            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent(this, equipmentslot, itemstack, itemstack1));
++            if (this instanceof ServerPlayer && equipmentslot.m_20743_() == EquipmentSlot.Type.ARMOR) {
++               final org.bukkit.inventory.ItemStack oldItem = CraftItemStack.asBukkitCopy(itemstack);
++               final org.bukkit.inventory.ItemStack newItem = CraftItemStack.asBukkitCopy(itemstack1);
++               new PlayerArmorChangeEvent((CraftPlayer) this.getBukkitEntity(), PlayerArmorChangeEvent.SlotType.valueOf(equipmentslot.name()), oldItem, newItem).callEvent();
++            }
              if (map == null) {
                 map = Maps.newEnumMap(EquipmentSlot.class);
              }
@@ -1429,14 +1541,16 @@
           if (this.m_20077_()) {
              d7 = this.m_204036_(FluidTags.f_13132_);
           } else {
-@@ -2513,15 +_,17 @@
+@@ -2513,15 +_,19 @@
           double d8 = this.m_20204_();
           if (!flag || this.m_20096_() && !(d7 > d8)) {
              if (!this.m_20077_() || this.m_20096_() && !(d7 > d8)) {
 +               if (fluidType.isAir() || this.m_20096_() && !(d7 > d8)) {
                 if ((this.m_20096_() || flag && d7 <= d8) && this.f_20954_ == 0) {
++                  if (new com.destroystokyo.paper.event.entity.EntityJumpEvent(getBukkitLivingEntity()).callEvent()) { // Paper
                    this.m_6135_();
                    this.f_20954_ = 10;
++                  } else { this.m_6862_(false); } // Paper - setJumping(false) stops a potential loop
                 }
 +               } else this.jumpInFluid(fluidType);
              } else {
@@ -1449,6 +1563,27 @@
           }
        } else {
           this.f_20954_ = 0;
+@@ -2576,6 +_,20 @@
+ 
+       this.m_6138_();
+       this.m_9236_().m_46473_().m_7238_();
++      // Paper start
++       if (((ServerLevel) this.m_9236_()).hasEntityMoveEvent && !(this instanceof net.minecraft.world.entity.player.Player)) {
++           if (this.f_19854_ != this.m_20185_() || this.f_19855_ != this.m_20186_() || this.f_19856_ != this.m_20189_() || this.f_19859_ != this.m_146908_() || this.f_19860_ != this.m_146909_()) {
++               Location from = new Location(this.m_9236_().getWorld(), this.f_19854_, this.f_19855_, this.f_19856_, this.f_19859_, this.f_19860_);
++              Location to = new Location (this.m_9236_().getWorld(), this.m_20185_(), this.m_20186_(), this.m_20189_(), this.m_146908_(), this.m_146909_());
++               io.papermc.paper.event.entity.EntityMoveEvent event = new io.papermc.paper.event.entity.EntityMoveEvent(this.getBukkitLivingEntity(), from, to.clone());
++               if (!event.callEvent()) {
++                   this.m_19890_(from.getX(), from.getY(), from.getZ(), from.getYaw(), from.getPitch());
++               } else if (!to.equals(event.getTo())) {
++                  this.m_19890_(event.getTo().getX(), event.getTo().getY(), event.getTo().getZ(), event.getTo().getYaw(), event.getTo().getPitch());
++               }
++           }
++       }
++       // Paper end
+       if (!this.m_9236_().f_46443_ && this.m_6126_() && this.m_20071_()) {
+          this.m_6469_(this.m_269291_().m_269063_(), 1.0F);
+       }
 @@ -2587,9 +_,12 @@
     }
  

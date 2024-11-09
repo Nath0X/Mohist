@@ -99,7 +99,7 @@
        if (!itemstack.m_41619_() && (this.f_31541_ & 1 << p_31590_.m_20750_() + 8) != 0) {
           return false;
        } else if (itemstack.m_41619_() && (this.f_31541_ & 1 << p_31590_.m_20750_() + 16) != 0) {
-@@ -375,9 +_,19 @@
+@@ -375,12 +_,26 @@
     public boolean m_6469_(DamageSource p_31579_, float p_31580_) {
        if (!this.m_9236_().f_46443_ && !this.m_213877_()) {
           if (p_31579_.m_269533_(DamageTypeTags.f_268738_)) {
@@ -118,18 +118,79 @@
 +            }
 +            // CraftBukkit end
              if (p_31579_.m_269533_(DamageTypeTags.f_268415_)) {
-                this.m_31653_(p_31579_);
-                this.m_6074_();
-@@ -422,7 +_,7 @@
+-               this.m_31653_(p_31579_);
+-               this.m_6074_();
++//               this.brokenByAnything(p_31579_);
++//               this.kill();
++               // Paper start - avoid duplicate event call
++               org.bukkit.event.entity.EntityDeathEvent event = this.brokenByAnything(p_31579_);
++               if (!event.isCancelled()) this.kill(false);
++               // Paper end
+                return false;
+             } else if (p_31579_.m_269533_(DamageTypeTags.f_268727_)) {
+                if (this.m_6060_()) {
+@@ -420,9 +_,11 @@
+                         this.m_146852_(GameEvent.f_223706_, p_31579_.m_7639_());
+                         this.f_31528_ = i;
                       } else {
-                         this.m_31646_(p_31579_);
+-                        this.m_31646_(p_31579_);
++//                        this.brokenByPlayer(p_31579_);
++                        org.bukkit.event.entity.EntityDeathEvent event = this.brokenByPlayer(p_31579_); // Paper
                          this.m_31565_();
 -                        this.m_6074_();
-+                        this.m_146870_(); // CraftBukkit - SPIGOT-4890: remain as this.discard() since above damagesource method will call death event
++//                        this.discard(); // CraftBukkit - SPIGOT-4890: remain as this.discard() since above damagesource method will call death event
++                        if (!event.isCancelled()) this.kill(false); // Paper - we still need to kill to follow vanilla logic (emit the game event etc...)
                       }
  
                       return true;
-@@ -592,7 +_,24 @@
+@@ -470,8 +_,12 @@
+       float f = this.m_21223_();
+       f -= p_31650_;
+       if (f <= 0.5F) {
+-         this.m_31653_(p_31649_);
+-         this.m_6074_();
++//         this.brokenByAnything(p_31649_);
++//         this.kill();
++         // Paper start - avoid duplicate event call
++         org.bukkit.event.entity.EntityDeathEvent event = this.brokenByAnything(p_31649_);
++         if (!event.isCancelled()) this.kill(false);
++         // Paper end
+       } else {
+          this.m_21153_(f);
+          this.m_146852_(GameEvent.f_223706_, p_31649_.m_7639_());
+@@ -479,19 +_,18 @@
+ 
+    }
+ 
+-   private void m_31646_(DamageSource p_31647_) {
++   private org.bukkit.event.entity.EntityDeathEvent brokenByPlayer(DamageSource p_31647_) {
+       ItemStack itemstack = new ItemStack(Items.f_42650_);
+       if (this.m_8077_()) {
+          itemstack.m_41714_(this.m_7770_());
+       }
+ 
+       Block.m_49840_(this.m_9236_(), this.m_20183_(), itemstack);
+-      this.m_31653_(p_31647_);
++      return this.brokenByAnything(p_31647_);
+    }
+ 
+-   private void m_31653_(DamageSource p_31654_) {
++   private org.bukkit.event.entity.EntityDeathEvent brokenByAnything(DamageSource p_31654_) {
+       this.m_31566_();
+-      this.m_6668_(p_31654_);
+ 
+       for(int i = 0; i < this.f_31538_.size(); ++i) {
+          ItemStack itemstack = this.f_31538_.get(i);
+@@ -508,7 +_,7 @@
+             this.f_31539_.set(j, ItemStack.f_41583_);
+          }
+       }
+-
++      return this.dropAllDeathLoot(p_31654_);
+    }
+ 
+    private void m_31566_() {
+@@ -592,7 +_,35 @@
        return this.m_31666_();
     }
  
@@ -141,6 +202,17 @@
 +   // CraftBukkit end
 +
     public void m_6074_() {
++      // Paper start
++      kill(true);
++   }
++
++   public void kill(boolean callEvent)  {
++      if (callEvent) {
++         // Paper end
++         org.bukkit.event.entity.EntityDeathEvent event = org.bukkit.craftbukkit.v1_20_R1.event.CraftEventFactory.callEntityDeathEvent(this, drops); // CraftBukkit - call event // Paper - make cancellable
++         if (event.isCancelled()) return; // Paper - make cancellable
++         // Paper
++      }
 +      Collection<ItemEntity> captureDrops = this.captureDrops(null);
 +      List<org.bukkit.inventory.ItemStack> drops;
 +      if (captureDrops == null) {
@@ -170,5 +242,14 @@
 -   private void m_31681_(boolean p_31682_) {
 +   public void m_31681_(boolean p_31682_) {
        this.f_19804_.m_135381_(f_31524_, this.m_31569_(this.f_19804_.m_135370_(f_31524_), 16, p_31682_));
+    }
+ 
+@@ -727,7 +_,7 @@
+    }
+ 
+    @Nullable
+-   protected SoundEvent m_5592_() {
++   public SoundEvent m_5592_() {
+       return SoundEvents.f_11681_;
     }
  

@@ -287,4 +287,36 @@ public interface Scoreboard {
      * @throws IllegalArgumentException if slot is null
      */
     void clearSlot(@NotNull DisplaySlot slot) throws IllegalArgumentException;
+    
+
+   // Paper start - improve scoreboard entries
+   /**
+* Gets all scores for an entity on this Scoreboard
+*
+* @param entity the entity whose scores are being retrieved
+* @return immutable set of all scores tracked for the entity
+* @throws IllegalArgumentException if entity is null
+* @see #getScores(String)
+*/
+   @NotNull Set<Score> getScoresFor(@NotNull org.bukkit.entity.Entity entity) throws IllegalArgumentException;
+
+           /**
+     * Removes all scores for an entity on this Scoreboard
+     *
+     * @param entity the entity to drop all current scores for
+     * @throws IllegalArgumentException if entity is null
+     * @see #resetScores(String)
+     */
+      void resetScoresFor(@NotNull org.bukkit.entity.Entity entity) throws IllegalArgumentException;
+
+           /**
+     * Gets an entity's Team on this Scoreboard
+     *
+     * @param entity the entity to search for
+     * @return the entity's Team or null if the entity is not on a team
+     * @throws IllegalArgumentException if entity is null
+     * @see #getEntryTeam(String)
+     */
+     @Nullable Team getEntityTeam(@NotNull org.bukkit.entity.Entity entity) throws IllegalArgumentException;
+   // Paper end - improve scoreboard entries
 }

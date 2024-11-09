@@ -295,6 +295,43 @@ public interface Team {
      * @throws IllegalStateException if this team has been unregistered
      */
     void setOption(@NotNull Option option, @NotNull OptionStatus status) throws IllegalStateException;
+    
+       // Paper start - improve scoreboard entries
+               /**
+         * This puts the specified entity onto this team for the scoreboard.
+         * <p>
+         * This will remove the entity from any other team on the scoreboard.
+         *
+         * @param entity the entity to add
+         * @throws IllegalArgumentException if entity is null
+         * @throws IllegalStateException if this team has been unregistered
+         * @see #addEntry(String)
+         */
+               void addEntity(@NotNull org.bukkit.entity.Entity entity) throws IllegalStateException, IllegalArgumentException;
+
+           /**
+     * Removes the entity from this team.
+     *
+     * @param entity the entity to remove
+     * @return if the entity was on this team
+     * @throws IllegalArgumentException if entity is null
+     * @throws IllegalStateException if this team has been unregistered
+     * @see #removeEntry(String)
+     */
+           boolean removeEntity(@NotNull org.bukkit.entity.Entity entity) throws IllegalStateException, IllegalArgumentException;
+
+           /**
+     * Checks to see if the specified entity is a member of this team.
+     *
+     * @param entity the entity to search for
+     * @return true if the entity is a member of this team
+     * @throws IllegalArgumentException if entity is null
+     * @throws IllegalStateException if this team has been unregistered
+     * @see #hasEntry(String)
+     */
+           boolean hasEntity(@NotNull org.bukkit.entity.Entity entity) throws IllegalStateException, IllegalArgumentException;
+   // Paper end - improve scoreboard entries
+
 
     /**
      * Represents an option which may be applied to this team.

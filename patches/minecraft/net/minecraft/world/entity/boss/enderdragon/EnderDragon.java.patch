@@ -167,6 +167,19 @@
        if (flag1) {
           BlockPos blockpos1 = new BlockPos(i + this.f_19796_.m_188503_(l - i + 1), j + this.f_19796_.m_188503_(i1 - j + 1), k + this.f_19796_.m_188503_(j1 - k + 1));
           this.m_9236_().m_46796_(2008, blockpos1, 0);
+@@ -499,6 +_,12 @@
+    }
+ 
+    public void m_6074_() {
++      //Paper start
++      org.bukkit.event.entity.EntityDeathEvent deathEvent =  org.bukkit.craftbukkit.v1_20_R1.event.CraftEventFactory.callEntityDeathEvent(this);
++      if (deathEvent.isCancelled()) {
++         return;
++      }
++      // Paper end
+       this.m_142687_(Entity.RemovalReason.KILLED);
+       this.m_146850_(GameEvent.f_223707_);
+       if (this.f_31073_ != null) {
 @@ -518,29 +_,48 @@
           float f = (this.f_19796_.m_188501_() - 0.5F) * 8.0F;
           float f1 = (this.f_19796_.m_188501_() - 0.5F) * 4.0F;
@@ -233,6 +246,15 @@
     }
  
     public void m_6043_() {
+@@ -766,7 +_,7 @@
+       return SoundEvents.f_11895_;
+    }
+ 
+-   protected float m_6121_() {
++   public float m_6121_() {
+       return 5.0F;
+    }
+ 
 @@ -863,8 +_,19 @@
        return false;
     }

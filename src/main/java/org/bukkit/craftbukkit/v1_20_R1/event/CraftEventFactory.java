@@ -860,11 +860,29 @@ public class CraftEventFactory {
     }
 
     public static EntityDeathEvent callEntityDeathEvent(LivingEntity victim, List<org.bukkit.inventory.ItemStack> drops) {
+        return CraftEventFactory.callEntityDeathEvent(victim, drops, com.google.common.util.concurrent.Runnables.doNothing());
+    }
+
+    public static EntityDeathEvent callEntityDeathEvent(net.minecraft.world.entity.LivingEntity victim, List<org.bukkit.inventory.ItemStack> drops, Runnable lootCheck) {
         CraftLivingEntity entity = (CraftLivingEntity) victim.getBukkitEntity();
         EntityDeathEvent event = new EntityDeathEvent(entity, drops, victim.getExperienceReward());
+        populateFields(victim, event); // Paper - make cancellable
         CraftWorld world = (CraftWorld) entity.getWorld();
         Bukkit.getServer().getPluginManager().callEvent(event);
-
+        // Paper start - make cancellable
+        if (event.isCancelled()) {
+            return event;
+        }
+        playDeathSound(victim, event);
+        lootCheck.run();
+        for (org.bukkit.inventory.ItemStack stack : event.getDrops()) {
+            if (stack == null || stack.getType() == Material.AIR || stack.getAmount() == 0)
+                continue;
+            world.dropItem(entity.getLocation(), stack);
+            if (stack instanceof CraftItemStack)
+                stack.setAmount(0);
+        }
+        // Paper end
         return event;
     }
 
@@ -873,8 +891,15 @@ public class CraftEventFactory {
         PlayerDeathEvent event = new PlayerDeathEvent(entity, drops, victim.getExperienceReward(), 0, deathMessage);
         event.setKeepInventory(keepInventory);
         event.setKeepLevel(victim.keepLevel); // SPIGOT-2222: pre-set keepLevel
+        populateFields(victim, event); // Paper - make cancellable
         org.bukkit.World world = entity.getWorld();
         Bukkit.getServer().getPluginManager().callEvent(event);
+        // Paper start - make cancellable
+        if (event.isCancelled()) {
+            return event;
+        }
+        playDeathSound(victim, event);
+        // Paper end
         victim.keepLevel = event.getKeepLevel();
         victim.newLevel = event.getNewLevel();
         victim.newTotalExp = event.getNewTotalExp();
@@ -882,6 +907,32 @@ public class CraftEventFactory {
 
         return event;
     }
+
+    // Paper start - helper methods for making death event cancellable
+   // Add information to death event
+    private static void populateFields(net.minecraft.world.entity.LivingEntity victim, EntityDeathEvent event) {
+        event.setReviveHealth(event.getEntity().getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue());
+        event.setShouldPlayDeathSound(!victim.isSilent());
+        net.minecraft.sounds.SoundEvent soundEffect = victim.getDeathSound();
+        event.setDeathSound(soundEffect != null ? org.bukkit.craftbukkit.v1_20_R1.CraftSound.getBukkit(soundEffect) : null);
+        event.setDeathSoundCategory(org.bukkit.SoundCategory.valueOf(victim.getSoundSource().name()));
+        event.setDeathSoundVolume(victim.getSoundVolume());
+        event.setDeathSoundPitch(victim.getVoicePitch());
+    }
+
+    // Play death sound manually
+    private static void playDeathSound(net.minecraft.world.entity.LivingEntity victim, EntityDeathEvent event) {
+        if (event.shouldPlayDeathSound() && event.getDeathSound() != null && event.getDeathSoundCategory() != null) {
+            net.minecraft.world.entity.player.Player source = victim instanceof net.minecraft.world.entity.player.Player ? (net.minecraft.world.entity.player.Player) victim : null;
+            double x = event.getEntity().getLocation().getX();
+            double y = event.getEntity().getLocation().getY();
+            double z = event.getEntity().getLocation().getZ();
+            net.minecraft.sounds.SoundEvent soundEffect = org.bukkit.craftbukkit.v1_20_R1.CraftSound.getSoundEffect(event.getDeathSound());
+            net.minecraft.sounds.SoundSource soundCategory = net.minecraft.sounds.SoundSource.valueOf(event.getDeathSoundCategory().name());
+            victim.level().playSound(source, x, y, z, soundEffect, soundCategory, event.getDeathSoundVolume(), event.getDeathSoundPitch());
+        }
+    }
+    // Paper end
 
     /**
      * Server methods
@@ -1556,25 +1607,46 @@ public class CraftEventFactory {
         return event;
     }
 
-    public static PrepareAnvilEvent callPrepareAnvilEvent(InventoryView view, ItemStack item) {
+//    public static PrepareAnvilEvent callPrepareAnvilEvent(InventoryView view, ItemStack item) {
+    // Paper start - disable this method, handled below
+    public static void callPrepareAnvilEvent(InventoryView view, ItemStack item) { // Paper - verify nothing uses return - handled below in PrepareResult
         PrepareAnvilEvent event = new PrepareAnvilEvent(view, CraftItemStack.asCraftMirror(item).clone());
-        event.getView().getPlayer().getServer().getPluginManager().callEvent(event);
+//        event.getView().getPlayer().getServer().getPluginManager().callEvent(event);
         event.getInventory().setItem(2, event.getResult());
-        return event;
+//        return event;
     }
 
-    public static PrepareGrindstoneEvent callPrepareGrindstoneEvent(InventoryView view, ItemStack item) {
+    public static void callPrepareGrindstoneEvent(InventoryView view, ItemStack item) {
         PrepareGrindstoneEvent event = new PrepareGrindstoneEvent(view, CraftItemStack.asCraftMirror(item).clone());
-        event.getView().getPlayer().getServer().getPluginManager().callEvent(event);
+//        event.getView().getPlayer().getServer().getPluginManager().callEvent(event);
         event.getInventory().setItem(2, event.getResult());
-        return event;
+//        return event;
     }
 
-    public static PrepareSmithingEvent callPrepareSmithingEvent(InventoryView view, ItemStack item) {
+    public static void callPrepareSmithingEvent(InventoryView view, ItemStack item) {
         PrepareSmithingEvent event = new PrepareSmithingEvent(view, CraftItemStack.asCraftMirror(item).clone());
-        event.getView().getPlayer().getServer().getPluginManager().callEvent(event);
+//        event.getView().getPlayer().getServer().getPluginManager().callEvent(event);
         event.getInventory().setResult(event.getResult());
-        return event;
+//        return event;
+    }
+
+    public static void callPrepareResultEvent(AbstractContainerMenu container, int resultSlot) {
+        com.destroystokyo.paper.event.inventory.PrepareResultEvent event;
+        InventoryView view = container.getBukkitView();
+        org.bukkit.inventory.ItemStack origItem = view.getTopInventory().getItem(resultSlot);
+        CraftItemStack result = origItem != null ? CraftItemStack.asCraftCopy(origItem) : null;
+        if (view.getTopInventory() instanceof org.bukkit.inventory.AnvilInventory) {
+            event = new PrepareAnvilEvent(view, result);
+        } else if (view.getTopInventory() instanceof org.bukkit.inventory.GrindstoneInventory) {
+            event = new PrepareGrindstoneEvent(view, result);
+        } else if (view.getTopInventory() instanceof org.bukkit.inventory.SmithingInventory) {
+            event = new PrepareSmithingEvent(view, result);
+        } else {
+            event = new com.destroystokyo.paper.event.inventory.PrepareResultEvent(view, result);
+        }
+        event.callEvent();
+       event.getInventory().setItem(resultSlot, event.getResult());
+        container.broadcastChanges();;
     }
 
     /**

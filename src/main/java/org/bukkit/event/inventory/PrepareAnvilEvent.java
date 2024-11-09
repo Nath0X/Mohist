@@ -10,9 +10,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Called when an item is put in a slot for repair by an anvil.
  */
-public class PrepareAnvilEvent extends PrepareInventoryResultEvent {
+public class PrepareAnvilEvent extends com.destroystokyo.paper.event.inventory.PrepareResultEvent {
 
-    private static final HandlerList handlers = new HandlerList();
+//    private static final HandlerList handlers = new HandlerList();
 
     public PrepareAnvilEvent(@NotNull InventoryView inventory, @Nullable ItemStack result) {
         super(inventory, result);
@@ -24,14 +24,5 @@ public class PrepareAnvilEvent extends PrepareInventoryResultEvent {
         return (AnvilInventory) super.getInventory();
     }
 
-    @NotNull
-    @Override
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
-    }
+    // Paper - move HandlerList to PrepareInventoryResultEvent
 }

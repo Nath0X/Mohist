@@ -1,5 +1,6 @@
 package org.bukkit.entity;
 
+import io.papermc.paper.entity.Frictional;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,7 +10,7 @@ import java.util.UUID;
 /**
  * Represents a dropped item.
  */
-public interface Item extends Entity {
+public interface Item extends Entity, io.papermc.paper.entity.Frictional {
 
     /**
      * Gets the item stack associated with this item drop.

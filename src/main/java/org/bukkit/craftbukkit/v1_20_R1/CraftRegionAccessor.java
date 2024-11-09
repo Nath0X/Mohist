@@ -302,6 +302,22 @@ public abstract class CraftRegionAccessor implements RegionAccessor {
         return getHandle().getHeight(CraftHeightMap.toNMS(heightMap), x, z);
     }
 
+    public boolean lineOfSightExists(Location from, Location to) {
+                Preconditions.checkArgument(from != null, "from parameter in lineOfSightExists cannot be null");
+                Preconditions.checkArgument(to != null, "to parameter in lineOfSightExists cannot be null");
+                if (from.getWorld() != to.getWorld()) {
+                        return false;
+                    }
+
+                        net.minecraft.world.phys.Vec3 start = new net.minecraft.world.phys.Vec3(from.getX(), from.getY(), from.getZ());
+                net.minecraft.world.phys.Vec3 end = new net.minecraft.world.phys.Vec3(to.getX(), to.getY(), to.getZ());
+                if (end.distanceToSqr(start) > 128D * 128D) {
+                       return false; // Return early if the distance is greater than 128 blocks
+                    }
+
+                        return this.getHandle().clip(new net.minecraft.world.level.ClipContext(start, end, net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, null)).getType() == net.minecraft.world.phys.HitResult.Type.MISS;
+            }
+
     @Override
     public int getHighestBlockYAt(Location location, org.bukkit.HeightMap heightMap) {
         return getHighestBlockYAt(location.getBlockX(), location.getBlockZ(), heightMap);
