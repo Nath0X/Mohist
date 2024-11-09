@@ -81,11 +81,11 @@ public final class CraftPlayerProfile implements PlayerProfile {
     }
 
     @Nullable
-    Property getProperty(String propertyName) {
+    public Property getProperty(String propertyName) {
         return Iterables.getFirst(properties.get(propertyName), null);
     }
 
-    void setProperty(String propertyName, @Nullable Property property) {
+    public void setProperty(String propertyName, @Nullable Property property) {
         // Assert: (property == null) || property.getName().equals(propertyName)
         removeProperty(propertyName);
         if (property != null) {

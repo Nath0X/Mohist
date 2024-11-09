@@ -189,7 +189,7 @@
  
  public class ServerLevel extends Level implements WorldGenLevel {
     public static final BlockPos f_8562_ = new BlockPos(100, 50, 0);
-@@ -188,24 +_,87 @@
+@@ -188,24 +_,88 @@
     private final List<CustomSpawner> f_8558_;
     @Nullable
     private EndDragonFight f_8559_;
@@ -207,6 +207,7 @@
 +   public PrimaryLevelData K;
 +   public final LevelStorageAccess convertable;
 +   public final UUID uuid;
++   public boolean hasEntityMoveEvent = false; // Paper
 +   public final String name;
 +   public ResourceKey<LevelStem> typeKey;
 +
@@ -980,7 +981,7 @@
           ServerLevel.this.m_7726_().m_8443_(p_143375_);
           if (p_143375_ instanceof ServerPlayer serverplayer) {
              ServerLevel.this.f_8546_.remove(serverplayer);
-@@ -1500,17 +_,48 @@
+@@ -1500,17 +_,49 @@
              ServerLevel.this.f_143246_.remove(mob);
           }
  
@@ -1003,6 +1004,7 @@
 +            }
 +         }
 +         // CraftBukkit end
++         new com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent(p_143375_.getBukkitEntity()).callEvent(); // Paper - fire while valid
        }
  
        public void m_214006_(Entity p_215086_) {

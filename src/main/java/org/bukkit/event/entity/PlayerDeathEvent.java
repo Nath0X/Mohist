@@ -17,6 +17,7 @@ public class PlayerDeathEvent extends EntityDeathEvent {
     private int newTotalExp = 0;
     private boolean keepLevel = false;
     private boolean keepInventory = false;
+    private boolean doExpDrop;
 
     public PlayerDeathEvent(@NotNull final Player player, @NotNull final List<ItemStack> drops, final int droppedExp, @Nullable final String deathMessage) {
         this(player, drops, droppedExp, 0, deathMessage);
@@ -27,6 +28,10 @@ public class PlayerDeathEvent extends EntityDeathEvent {
     }
 
     public PlayerDeathEvent(@NotNull final Player player, @NotNull final List<ItemStack> drops, final int droppedExp, final int newExp, final int newTotalExp, final int newLevel, @Nullable final String deathMessage) {
+        this(player, drops, droppedExp, newExp, newTotalExp, newLevel, deathMessage, true);
+    }
+
+    public PlayerDeathEvent(@NotNull final Player player, @NotNull final List<ItemStack> drops, final int droppedExp, final int newExp, final int newTotalExp, final int newLevel, @Nullable final String deathMessage, boolean doExpDrop) {
         super(player, drops, droppedExp);
         this.newExp = newExp;
         this.newTotalExp = newTotalExp;
@@ -180,6 +185,20 @@ public class PlayerDeathEvent extends EntityDeathEvent {
     }
 
     private List<ItemStack> itemsToKeep = new java.util.ArrayList<>();
+
+        /**
+         * @return should experience be dropped from this death
+         */
+    public boolean shouldDropExperience() {
+        return doExpDrop;
+    }
+
+    /**
+      * @param doExpDrop sets if experience should be dropped from this death
+      */
+    public void setShouldDropExperience(boolean doExpDrop) {
+       this.doExpDrop = doExpDrop;
+    }
 
     @NotNull
     public List<ItemStack> getItemsToKeep() {

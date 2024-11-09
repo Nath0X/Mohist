@@ -1,5 +1,13 @@
 --- a/net/minecraft/world/inventory/ItemCombinerMenu.java
 +++ b/net/minecraft/world/inventory/ItemCombinerMenu.java
+@@ -95,6 +_,7 @@
+       super.m_6199_(p_39778_);
+       if (p_39778_ == this.f_39769_) {
+          this.m_6640_();
++         org.bukkit.craftbukkit.v1_20_R1.event.CraftEventFactory.callPrepareResultEvent(this, this instanceof SmithingMenu ? 3 : 2); // Paper
+       }
+ 
+    }
 @@ -107,6 +_,7 @@
     }
  

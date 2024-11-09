@@ -8,6 +8,16 @@
  
  public class Panda extends Animal {
     private static final EntityDataAccessor<Integer> f_29073_ = SynchedEntityData.m_135353_(Panda.class, EntityDataSerializers.f_135028_);
+@@ -495,7 +_,9 @@
+ 
+       for(Panda panda : this.m_9236_().m_45976_(Panda.class, this.m_20191_().m_82400_(10.0D))) {
+          if (!panda.m_6162_() && panda.m_20096_() && !panda.m_20069_() && panda.m_29167_()) {
++            if (new com.destroystokyo.paper.event.entity.EntityJumpEvent(getBukkitLivingEntity()).callEvent()) { // Paper
+             panda.m_6135_();
++            } else { this.m_6862_(false); } // Paper - setJumping(false) stops a potential loop
+          }
+       }
+ 
 @@ -506,7 +_,8 @@
     }
  
@@ -18,6 +28,15 @@
           this.m_21053_(p_29121_);
           ItemStack itemstack = p_29121_.m_32055_();
           this.m_8061_(EquipmentSlot.MAINHAND, itemstack);
+@@ -651,7 +_,7 @@
+    }
+ 
+    @Nullable
+-   protected SoundEvent m_5592_() {
++   public SoundEvent m_5592_() {
+       return SoundEvents.f_12180_;
+    }
+ 
 @@ -828,7 +_,7 @@
  
        protected void m_5766_(Mob p_29295_, LivingEntity p_29296_) {

@@ -187,7 +187,7 @@
           }
  
           if (this.f_36097_.m_38721_() && this.f_19797_ % 10 == 0) {
-@@ -573,6 +_,7 @@
+@@ -573,10 +_,11 @@
     }
  
     public void m_6667_(DamageSource p_36152_) {
@@ -195,7 +195,19 @@
        super.m_6667_(p_36152_);
        this.m_20090_();
        if (!this.m_5833_()) {
-@@ -622,8 +_,17 @@
+-         this.m_6668_(p_36152_);
++         this.dropAllDeathLoot(p_36152_);
+       }
+ 
+       if (p_36152_ != null) {
+@@ -616,14 +_,23 @@
+       return p_36310_.m_269415_().f_268686_().m_269402_();
+    }
+ 
+-   protected SoundEvent m_5592_() {
++   public SoundEvent m_5592_() {
+       return SoundEvents.f_12322_;
+    }
  
     @Nullable
     public ItemEntity m_36176_(ItemStack p_36177_, boolean p_36178_) {
@@ -496,7 +508,7 @@
     protected Vec3 m_5763_(Vec3 p_36201_, MoverType p_36202_) {
        if (!this.f_36077_.f_35935_ && p_36201_.f_82480_ <= 0.0D && (p_36202_ == MoverType.SELF || p_36202_ == MoverType.PLAYER) && this.m_36343_() && this.m_36386_()) {
           double d0 = p_36201_.f_82479_;
-@@ -1047,11 +_,13 @@
+@@ -1047,13 +_,21 @@
        return p_36201_;
     }
  
@@ -507,10 +519,20 @@
     }
  
     public void m_5706_(Entity p_36347_) {
+-      if (p_36347_.m_6097_()) {
+-         if (!p_36347_.m_7313_(this)) {
 +      if (!net.minecraftforge.common.ForgeHooks.onPlayerAttackTarget(this, p_36347_)) return;
-       if (p_36347_.m_6097_()) {
-          if (!p_36347_.m_7313_(this)) {
++      boolean willAttack = p_36347_.m_6097_() && !p_36347_.m_7313_(this); // Vanilla logic
++      io.papermc.paper.event.player.PrePlayerAttackEntityEvent playerAttackEntityEvent = new io.papermc.paper.event.player.PrePlayerAttackEntityEvent(
++              (org.bukkit.entity.Player) this.getBukkitEntity(),
++              p_36347_.getBukkitEntity(),
++              willAttack
++      );
++         if (playerAttackEntityEvent.callEvent() && willAttack) { // Logic moved to willAttack local variable.
++         {
              float f = (float)this.m_21133_(Attributes.f_22281_);
+             float f1;
+             if (p_36347_ instanceof LivingEntity) {
 @@ -1065,11 +_,10 @@
              float f2 = this.m_36403_(0.5F);
              f *= 0.2F + f2 * f2 * 0.8F;

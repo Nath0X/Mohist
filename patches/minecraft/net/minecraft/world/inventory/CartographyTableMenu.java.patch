@@ -67,3 +67,11 @@
        return m_38889_(this.f_39136_, p_39149_, Blocks.f_50621_);
     }
  
+@@ -97,6 +_,7 @@
+          if (!itemstack.m_41619_() && !itemstack1.m_41619_()) {
+             this.m_39162_(itemstack, itemstack1, itemstack2);
+          }
++         org.bukkit.craftbukkit.v1_20_R1.event.CraftEventFactory.callPrepareResultEvent(this, f_150503_); // Paper
+       } else {
+          this.f_39138_.m_8016_(2);
+       }

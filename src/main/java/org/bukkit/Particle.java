@@ -163,6 +163,16 @@ public enum Particle {
     }
 
     /**
+     +     * Creates a {@link com.destroystokyo.paper.ParticleBuilder}
+     +     *
+     +     * @return a {@link com.destroystokyo.paper.ParticleBuilder} for the particle
+     +     */
+     @NotNull
+    public com.destroystokyo.paper.ParticleBuilder builder() {
+        return new com.destroystokyo.paper.ParticleBuilder(this);
+    }
+
+    /**
      * Options which can be applied to redstone dust particles - a particle
      * color and size.
      */

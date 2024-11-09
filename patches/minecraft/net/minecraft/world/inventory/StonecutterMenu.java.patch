@@ -56,3 +56,11 @@
        return m_38889_(this.f_40285_, p_40307_, Blocks.f_50679_);
     }
  
+@@ -131,6 +_,7 @@
+          this.f_40289_ = itemstack.m_41777_();
+          this.m_40303_(p_40302_, itemstack);
+       }
++      org.bukkit.craftbukkit.v1_20_R1.event.CraftEventFactory.callPrepareResultEvent(this, f_150666_); // Paper
+ 
+    }
+ 

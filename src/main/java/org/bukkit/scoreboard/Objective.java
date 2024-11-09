@@ -145,4 +145,17 @@ public interface Objective {
      */
     @NotNull
     Score getScore(@NotNull String entry) throws IllegalArgumentException, IllegalStateException;
+
+
+    // Paper start - improve scoreboard entries
+    /**
+      * Gets an entity's Score for an Objective on this Scoreboard.
+      *
+      * @param entity Entity for the Score
+      * @return Score tracking the Objective and entity specified
+      * @throws IllegalArgumentException if entity is null
+      * @throws IllegalStateException if this objective has been unregistered
+      */
+    @NotNull Score getScoreFor(@NotNull org.bukkit.entity.Entity entity) throws IllegalArgumentException, IllegalStateException;
+    // Paper end - improve scoreboard entries
 }

@@ -130,6 +130,15 @@ final class CraftObjective extends CraftScoreboardComponent implements Objective
         return new CraftScore(this, entry);
     }
 
+        // Paper start
+                @Override
+    public Score getScoreFor(org.bukkit.entity.Entity entity) throws IllegalArgumentException, IllegalStateException {
+                Preconditions.checkArgument(entity != null, "Entity cannot be null");
+                return getScore(((org.bukkit.craftbukkit.v1_20_R1.entity.CraftEntity) entity).getHandle().getScoreboardName());
+            }
+    // Paper end
+
+
     @Override
     public void unregister() {
         CraftScoreboard scoreboard = checkState();

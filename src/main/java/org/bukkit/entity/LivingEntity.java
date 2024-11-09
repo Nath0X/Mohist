@@ -26,7 +26,7 @@ import java.util.UUID;
 /**
  * Represents a living entity, such as a monster or player
  */
-public interface LivingEntity extends Attributable, Damageable, ProjectileSource {
+public interface LivingEntity extends Attributable, Damageable, ProjectileSource, io.papermc.paper.entity.Frictional {
 
     /**
      * Gets the height of the living entity's eyes above its Location.
@@ -83,6 +83,26 @@ public interface LivingEntity extends Attributable, Damageable, ProjectileSource
      */
     @NotNull
     public Block getTargetBlock(@Nullable Set<Material> transparent, int maxDistance);
+
+        /**
+          * Get entity jump state.
+          * <p>
+          * Jump state will be true when the entity has been marked to jump.
+          *
+          * @return entity jump state.
+          */
+        boolean isJumping();
+
+    /**
+      * Set entity jump state
+      * <p>
+     * Setting to true will mark the entity to jump.
+      * <p>
+      * Setting to false will unmark the entity to jump but will not stop a jump already in-progress.
+      *
+      * @param jumping entity jump state
+      */
+        void setJumping(boolean jumping);
 
     /**
      * Gets information about the entity being targeted
@@ -414,6 +434,20 @@ public interface LivingEntity extends Attributable, Damageable, ProjectileSource
      * @return true if there is a line of sight, false if not
      */
     public boolean hasLineOfSight(@NotNull Entity other);
+
+    // Paper start
+    /**
+      * Checks whether the living entity has block line of sight to the given block.
+      * <p>
+      * This uses the same algorithm that hostile mobs use to find the closest
+      * player.
+      *
+      * @param location the location to determine line of sight to
+      * @return true if there is a line of sight, false if not
+      */
+    public boolean hasLineOfSight(@NotNull Location location);
+    // Paper end
+
 
     /**
      * Returns if the living entity despawns when away from players or not.

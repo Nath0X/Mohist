@@ -173,6 +173,18 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
         return blocks;
     }
 
+        @org.jetbrains.annotations.NotNull
+    @Override
+    public net.kyori.adventure.util.TriState getFrictionState() {
+                return this.getHandle().frictionState;
+            }
+
+            @Override
+    public void setFrictionState(@org.jetbrains.annotations.NotNull net.kyori.adventure.util.TriState state) {
+                java.util.Objects.requireNonNull(state, "state may not be null");
+                this.getHandle().frictionState = state;
+            }
+
     @Override
     public List<Block> getLineOfSight(Set<Material> transparent, int maxDistance) {
         return getLineOfSight(transparent, maxDistance, 0);
@@ -517,6 +529,23 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
         return getHandle().hasLineOfSight(((CraftEntity) other).getHandle());
     }
 
+        // Paper start
+                @Override
+    public boolean hasLineOfSight(Location loc) {
+                if (this.getHandle().level() != ((CraftWorld) loc.getWorld()).getHandle()) {
+                        return false;
+                    }
+
+                        net.minecraft.world.phys.Vec3 start = new net.minecraft.world.phys.Vec3(this.getHandle().getX(), this.getHandle().getEyeY(), this.getHandle().getZ());
+                net.minecraft.world.phys.Vec3 end = new net.minecraft.world.phys.Vec3(loc.getX(), loc.getY(), loc.getZ());
+                if (end.distanceToSqr(start) > 128D * 128D) {
+                        return false; // Return early if the distance is greater than 128 blocks
+                    }
+
+                        return this.getHandle().level().clipDirect(start, end, net.minecraft.world.phys.shapes.CollisionContext.of(this.getHandle())) == net.minecraft.world.phys.HitResult.Type.MISS;
+            }
+    // Paper end
+
     @Override
     public boolean getRemoveWhenFarAway() {
         return getHandle() instanceof Mob && !((Mob) getHandle()).isPersistenceRequired();
@@ -684,6 +713,20 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     public void swingOffHand() {
         Preconditions.checkState(!getHandle().generation, "Cannot swing hand during world generation");
         getHandle().swing(InteractionHand.OFF_HAND, true);
+    }
+
+    @Override
+    public boolean isJumping() {
+        return getHandle().jumping;
+    }
+
+    @Override
+    public void setJumping(boolean jumping) {
+        getHandle().setJumping(jumping);
+        if (jumping && getHandle() instanceof Mob) {
+            // this is needed to actually make a mob jump
+            ((Mob) getHandle()).getJumpControl().jump();
+        }
     }
 
     @Override

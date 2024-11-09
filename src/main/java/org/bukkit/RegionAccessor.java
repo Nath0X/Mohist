@@ -394,4 +394,13 @@ public interface RegionAccessor {
      * {@link HeightMap}
      */
     public int getHighestBlockYAt(@NotNull Location location, @NotNull HeightMap heightMap);
+
+
+    /**
+  * Tell whether a line of sight exists between the given locations
+  * @param from Location to start at
+  * @param to target Location
+  * @return whether a line of sight exists between {@code from} and {@code to}
+  */
+    public boolean lineOfSightExists(@NotNull Location from, @NotNull Location to);
 }

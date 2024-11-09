@@ -181,6 +181,14 @@
           this.m_38946_();
        }
     }
+@@ -287,6 +_,7 @@
+          }
+ 
+          this.m_6640_();
++         org.bukkit.craftbukkit.v1_20_R1.event.CraftEventFactory.callPrepareResultEvent(this, f_266102_); // Paper
+          return true;
+       } else {
+          return false;
 @@ -301,5 +_,9 @@
  
     public int m_39028_() {

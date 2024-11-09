@@ -47,6 +47,16 @@
        return m_38889_(this.f_39845_, p_39865_, Blocks.f_50617_);
     }
  
+@@ -186,7 +_,8 @@
+             this.f_39851_.m_5852_(ItemStack.f_41583_);
+          }
+ 
+-         this.m_38946_();
++//         this.broadcastChanges();
++         org.bukkit.craftbukkit.v1_20_R1.event.CraftEventFactory.callPrepareResultEvent(this, 3); // Paper
+       } else {
+          this.f_39851_.m_5852_(ItemStack.f_41583_);
+          this.f_219990_ = List.of();
 @@ -313,4 +_,20 @@
     public Slot m_39897_() {
        return this.f_39851_;

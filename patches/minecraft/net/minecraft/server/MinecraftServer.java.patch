@@ -674,7 +674,7 @@
     }
  
     private ServerStatus.Players m_271961_() {
-@@ -847,21 +_,33 @@
+@@ -847,21 +_,34 @@
     }
  
     public void m_5703_(BooleanSupplier p_129954_) {
@@ -701,6 +701,7 @@
 +      for(ServerLevel serverlevel : this.getWorldArray()) {
 +         long tickStart = Util.m_137569_();
           this.f_129754_.m_6521_(() -> {
++            serverlevel.hasEntityMoveEvent =  io.papermc.paper.event.entity.EntityMoveEvent.getHandlerList().getRegisteredListeners().length > 0; // Paper
              return serverlevel + " " + serverlevel.m_46472_().m_135782_();
           });
 -         if (this.f_129766_ % 20 == 0) {
