@@ -26,7 +26,7 @@
  
  public class ItemEntity extends Entity implements TraceableEntity {
     private static final EntityDataAccessor<ItemStack> f_31984_ = SynchedEntityData.m_135353_(ItemEntity.class, EntityDataSerializers.f_135033_);
-@@ -38,10 +_,14 @@
+@@ -38,10 +_,15 @@
     public int f_31986_;
     private int f_31987_ = 5;
     @Nullable
@@ -40,6 +40,7 @@
 +    * The maximum age of this EntityItem.  The item is expired once this is reached.
 +    */
 +   public int lifespan = ItemEntity.f_149659_;
++   public net.kyori.adventure.util.TriState frictionState = net.kyori.adventure.util.TriState.NOT_SET; // Paper
  
     public ItemEntity(EntityType<? extends ItemEntity> p_31991_, Level p_31992_) {
        super(p_31991_, p_31992_);
@@ -77,11 +78,17 @@
           if (this.m_20069_() && this.m_204036_(FluidTags.f_13131_) > (double)f) {
              this.m_32067_();
           } else if (this.m_20077_() && this.m_204036_(FluidTags.f_13132_) > (double)f) {
-@@ -128,7 +_,8 @@
+@@ -127,8 +_,13 @@
+          if (!this.m_20096_() || this.m_20184_().m_165925_() > (double)1.0E-5F || (this.f_19797_ + this.m_19879_()) % 4 == 0) {
              this.m_6478_(MoverType.SELF, this.m_20184_());
              float f1 = 0.98F;
-             if (this.m_20096_()) {
+-            if (this.m_20096_()) {
 -               f1 = this.m_9236_().m_8055_(this.m_20099_()).m_60734_().m_49958_() * 0.98F;
++            // Paper start
++            if (frictionState == net.kyori.adventure.util.TriState.FALSE) {
++               f1 = 1F;
++            } else if (this.m_20096_()) {
++               // Paper end
 +               BlockPos groundPos = m_20099_();
 +               f1 = this.m_9236_().m_8055_(groundPos).getFriction(m_9236_(), groundPos, this) * 0.98F;
              }
@@ -160,7 +167,15 @@
              this.m_146870_();
           }
  
-@@ -277,6 +_,7 @@
+@@ -274,9 +_,15 @@
+    }
+ 
+    public void m_7380_(CompoundTag p_32050_) {
++     // Paper start
++      if (this.frictionState != net.kyori.adventure.util.TriState.NOT_SET) {
++         p_32050_.m_128359_("Paper.FrictionState", this.frictionState.toString());
++      }
++       // Paper end
        p_32050_.m_128376_("Health", (short)this.f_31987_);
        p_32050_.m_128376_("Age", (short)this.f_31985_);
        p_32050_.m_128376_("PickupDelay", (short)this.f_31986_);
@@ -178,6 +193,23 @@
  
        if (p_32034_.m_128403_("Owner")) {
           this.f_265881_ = p_32034_.m_128342_("Owner");
+@@ -306,6 +_,16 @@
+          this.f_31988_ = p_32034_.m_128342_("Thrower");
+       }
+ 
++              // Paper start
++                      if (p_32034_.m_128441_("Paper.FrictionState")) {
++                     String fs = p_32034_.m_128461_("Paper.FrictionState");
++                     try {
++                            frictionState = net.kyori.adventure.util.TriState.valueOf(fs);
++                        } catch (Exception ignored) {
++                            com.mojang.logging.LogUtils.getLogger().error("Unknown friction state " + fs + " for " + this);
++                        }
++                 }
++              // Paper end
+       CompoundTag compoundtag = p_32034_.m_128469_("Item");
+       this.m_32045_(ItemStack.m_41712_(compoundtag));
+       if (this.m_32055_().m_41619_()) {
 @@ -316,10 +_,76 @@
  
     public void m_6123_(Player p_32040_) {

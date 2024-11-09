@@ -764,23 +764,29 @@
        Explosion explosion = this.m_255278_(p_256039_, p_255778_, p_256002_, p_256067_, p_256370_, p_256153_, p_256045_, p_255686_, p_255827_, false);
        if (!explosion.m_254884_()) {
           explosion.m_46080_();
-@@ -1044,6 +_,21 @@
+@@ -1044,6 +_,27 @@
        return i;
     }
  
-+   public <T extends ParticleOptions> int sendParticles(ServerPlayer sender, T pType, double pPosX, double pPosY, double pPosZ, int pParticleCount, double pXOffset, double pYOffset, double pZOffset, double pSpeed, boolean force) {
-+      ClientboundLevelParticlesPacket clientboundlevelparticlespacket = new ClientboundLevelParticlesPacket(pType, force, pPosX, pPosY, pPosZ, (float)pXOffset, (float)pYOffset, (float)pZOffset, (float)pSpeed, pParticleCount);
-+      int i = 0;
++   public <T extends ParticleOptions> int sendParticles(ServerPlayer sender, T t0, double d0, double d1, double d2, int i, double d3, double d4, double d5, double d6, boolean force) {
++      // Paper start - Particle API Expansion
++      return sendParticles(f_8546_, sender, t0, d0, d1, d2, i, d3, d4, d5, d6, force);
++   }
 +
-+      for(int j = 0; j < this.f_8546_.size(); ++j) {
-+         ServerPlayer serverplayer = this.f_8546_.get(j);
++   public <T extends ParticleOptions> int sendParticles(List<ServerPlayer> receivers, ServerPlayer sender, T t0, double d0, double d1, double d2, int i, double d3, double d4, double d5, double d6, boolean force) {
++      // Paper end
++      ClientboundLevelParticlesPacket clientboundlevelparticlespacket = new ClientboundLevelParticlesPacket(t0, force, d0, d1, d2, (float) d3, (float) d4, (float) d5, (float) d6, i);
++
++      int j = 0;
++      for (Player entityhuman : receivers) {
++         ServerPlayer serverplayer = (ServerPlayer) entityhuman; // Paper - Particle API Expansion
 +         if (sender != null && !serverplayer.getBukkitEntity().canSee(sender.getBukkitEntity())) continue; // CraftBukkit
-+         if (this.m_8636_(serverplayer, force, pPosX, pPosY, pPosZ, clientboundlevelparticlespacket)) { // CraftBukkit
-+            ++i;
++         if (this.m_8636_(serverplayer, force, d0, d1, d2, clientboundlevelparticlespacket)) { // CraftBukkit
++            ++j;
 +         }
 +      }
 +
-+      return i;
++      return j;
 +   }
 +
     public <T extends ParticleOptions> boolean m_8624_(ServerPlayer p_8625_, T p_8626_, boolean p_8627_, double p_8628_, double p_8629_, double p_8630_, int p_8631_, double p_8632_, double p_8633_, double p_8634_, double p_8635_) {

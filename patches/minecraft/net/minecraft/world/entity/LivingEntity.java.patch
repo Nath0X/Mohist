@@ -217,6 +217,16 @@
           this.m_252836_();
        }
  
+@@ -624,7 +_,8 @@
+    }
+ 
+    public boolean m_147223_() {
+-      return this.f_147183_;
++//      return this.discardFriction;
++      return !this.frictionState.toBooleanOrElse(!this.f_147183_); // Paper
+    }
+ 
+    public void m_147244_(boolean p_147245_) {
 @@ -635,12 +_,14 @@
        return true;
     }
@@ -233,7 +243,7 @@
                 this.m_9236_().m_6263_((Player)null, this.m_20185_(), this.m_20186_(), this.m_20189_(), equipable.m_150681_(), this.m_5720_(), 1.0F, 1.0F);
              }
  
-@@ -652,6 +_,15 @@
+@@ -652,12 +_,26 @@
        }
     }
  
@@ -249,6 +259,32 @@
     public void m_142687_(Entity.RemovalReason p_276115_) {
        super.m_142687_(p_276115_);
        this.f_20939_.m_276084_();
+    }
+ 
+    public void m_7380_(CompoundTag p_21145_) {
++             // Paper start
++                      if (this.frictionState != net.kyori.adventure.util.TriState.NOT_SET) {
++                         p_21145_.m_128359_("Paper.FrictionState", this.frictionState.toString());
++                 }
++              // Paper end
+       p_21145_.m_128350_("Health", this.m_21223_());
+       p_21145_.m_128376_("HurtTime", (short)this.f_20916_);
+       p_21145_.m_128405_("HurtByTimestamp", this.f_20950_);
+@@ -688,6 +_,14 @@
+ 
+    public void m_7378_(CompoundTag p_21096_) {
+       this.m_7911_(p_21096_.m_128457_("AbsorptionAmount"));
++     if (p_21096_.m_128441_("Paper.FrictionState")) {
++        String fs = p_21096_.m_128461_("Paper.FrictionState");
++        try {
++           frictionState = net.kyori.adventure.util.TriState.valueOf(fs);
++        } catch (Exception ignored) {
++           f_201943_.error("Unknown friction state " + fs + " for " + this);
++        }
++     }
+       if (p_21096_.m_128425_("Attributes", 9) && this.m_9236_() != null && !this.m_9236_().f_46443_) {
+          this.m_21204_().m_22168_(p_21096_.m_128437_("Attributes", 10));
+       }
 @@ -704,6 +_,18 @@
           }
        }
@@ -1649,7 +1685,7 @@
           this.m_21028_(entity);
        }
  
-@@ -2726,14 +_,14 @@
+@@ -2726,23 +_,19 @@
     }
  
     public void m_7938_(Entity p_21030_, int p_21031_) {
@@ -1667,15 +1703,16 @@
           return false;
        } else {
           Vec3 vec3 = new Vec3(this.m_20185_(), this.m_20188_(), this.m_20189_());
-@@ -2741,7 +_,7 @@
-          if (vec31.m_82554_(vec3) > 128.0D) {
-             return false;
-          } else {
+          Vec3 vec31 = new Vec3(p_147185_.m_20185_(), p_147185_.m_20188_(), p_147185_.m_20189_());
+-         if (vec31.m_82554_(vec3) > 128.0D) {
+-            return false;
+-         } else {
 -            return this.m_9236_().m_45547_(new ClipContext(vec3, vec31, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)).m_6662_() == HitResult.Type.MISS;
-+            return this.f_19853_.m_45547_(new ClipContext(vec3, vec31, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)).m_6662_() == HitResult.Type.MISS;
-          }
+-         }
++         return vec31.m_82557_(vec3) > 128.0D * 128.0D ? false : this.m_9236_().clipDirect(vec3, vec31, net.minecraft.world.phys.shapes.CollisionContext.m_82750_(this)) == HitResult.Type.MISS; // Paper
        }
     }
+ 
 @@ -2760,12 +_,19 @@
     }
  
@@ -2110,7 +2147,7 @@
     public float m_274421_() {
        float f = super.m_274421_();
        return this.m_6688_() instanceof Player ? Math.max(f, 1.0F) : f;
-@@ -3334,4 +_,9 @@
+@@ -3334,4 +_,10 @@
  
     public static record Fallsounds(SoundEvent f_196626_, SoundEvent f_196627_) {
     }
@@ -2119,4 +2156,5 @@
 +
 +   public CraftLivingEntity getBukkitLivingEntity() { return (CraftLivingEntity) super.getBukkitEntity(); }
 +   // CraftBukkit end
++   public net.kyori.adventure.util.TriState frictionState = net.kyori.adventure.util.TriState.NOT_SET; // Paper
  }
